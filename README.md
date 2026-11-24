@@ -77,6 +77,7 @@ of chars that share the bits telling them apart, as `bend_json`'s `gen_tree.py` 
 ## Limits
 
 - `raw` and the name in `data(name, value)` are written as given: never pass them untrusted text.
+- The constructors `H.Elem`, `H.Void`, `H.Txt` and `H.Raw` are public: a tag name given to `H.Elem` or `H.Void` is written as given.
 - No `script` or `style` elements: their content is not HTML-escaped text. Use `raw` with care.
 - Only lists have a content model; a `tr` outside a `table` passes the checker.
 - `bend PROOF.bend --verdict`, the second check by the kernel proven in Lean, has not been run.

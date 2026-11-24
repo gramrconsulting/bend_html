@@ -465,13 +465,13 @@ def ul(attrs: List<&2, Attr>, items: List<&2, Li>) -> Node:
   Elem{"ul", attrs, li_nodes(items)}
 
 def ul_(items: List<&2, Li>) -> Node:
-  Elem{"ul", [], li_nodes(items)}
+  ul([], items)
 
 def ol(attrs: List<&2, Attr>, items: List<&2, Li>) -> Node:
   Elem{"ol", attrs, li_nodes(items)}
 
 def ol_(items: List<&2, Li>) -> Node:
-  Elem{"ol", [], li_nodes(items)}
+  ol([], items)
 
 # Escaping
 # ========
