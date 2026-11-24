@@ -522,6 +522,22 @@ def esc(s: String, tail: String) -> String:
 def escape(s: String) -> String:
   esc(s, "")
 
+# Back to the text: undoes escape. An & that starts no entity of ours stays.
+def unescape(s: String) -> String:
+  match s:
+    case SNil{}:
+      ""
+    case SCon{'&', SCon{'a', SCon{'m', SCon{'p', SCon{';', rest}}}}}:
+      SCon{'&', unescape(rest)}
+    case SCon{'&', SCon{'l', SCon{'t', SCon{';', rest}}}}:
+      SCon{'<', unescape(rest)}
+    case SCon{'&', SCon{'g', SCon{'t', SCon{';', rest}}}}:
+      SCon{'>', unescape(rest)}
+    case SCon{'&', SCon{'q', SCon{'u', SCon{'o', SCon{'t', SCon{';', rest}}}}}}:
+      SCon{'"', unescape(rest)}
+    case SCon{c, rest}:
+      SCon{c, unescape(rest)}
+
 # Rendering
 # =========
 

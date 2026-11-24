@@ -64,3 +64,11 @@ law text_is_escaped:
 law attribute_value_is_escaped:
   for +s: String
   {H.render(H.div([H.cls(s)], [])) == String.append("<div class=\"", String.append(H.escape(s), "\"></div>")) : String}
+
+# Unescaping what escape wrote gives the string back: escaping loses nothing.
+law escaping_loses_nothing:
+  for s: String
+  {H.unescape(H.escape(s)) == s : String}
+
+law unescapes:
+  {H.unescape("a &lt;b&gt; &amp; &quot;c&quot; & d &x;") == "a <b> & \"c\" & d &x;" : String}
