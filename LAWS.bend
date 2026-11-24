@@ -72,3 +72,32 @@ law escaping_loses_nothing:
 
 law unescapes:
   {H.unescape("a &lt;b&gt; &amp; &quot;c&quot; & d &x;") == "a <b> & \"c\" & d &x;" : String}
+
+# Lists, for every list of items
+# ==============================
+
+def all_li(ns: List<&2, H.Node>) -> Bool:
+  match ns:
+    case Nil{}:
+      True{}
+    case H.Elem{tag, attrs, children} <> rest:
+      String.eq(tag, "li") && all_li(rest)
+    case _ <> rest:
+      False{}
+
+def holds_only_li(n: H.Node) -> Bool:
+  match n:
+    case H.Elem{tag, attrs, children}:
+      all_li(children)
+    case _:
+      False{}
+
+law ul_holds_only_li:
+  for attrs: List<&2, H.Attr>
+  for items: List<&2, H.Li>
+  {holds_only_li(H.ul(attrs, items)) == True{} : Bool}
+
+law ol_holds_only_li:
+  for attrs: List<&2, H.Attr>
+  for items: List<&2, H.Li>
+  {holds_only_li(H.ol(attrs, items)) == True{} : Bool}

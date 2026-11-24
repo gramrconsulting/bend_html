@@ -364,3 +364,23 @@ def Laws.escaping_loses_nothing(s):
 
 def Laws.unescapes():
   {==}
+
+# Lists
+# =====
+
+law li_nodes_are_li:
+  for items: List<&2, H.Li>
+  {Laws.all_li(H.li_nodes(items)) == True{} : Bool}
+
+def li_nodes_are_li(items):
+  match items:
+    case Nil{}:
+      {==}
+    case H.Li{attrs, children} <> rest:
+      li_nodes_are_li(rest)
+
+def Laws.ul_holds_only_li(attrs, items):
+  li_nodes_are_li(items)
+
+def Laws.ol_holds_only_li(attrs, items):
+  li_nodes_are_li(items)
