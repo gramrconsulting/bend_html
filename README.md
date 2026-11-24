@@ -57,10 +57,18 @@ H.table_([
 | Def | Writes |
 |---|---|
 | `cls id href src alt title_attr type_ name value placeholder for_ rel charset content lang action method` | `name="value"`, the value escaped |
+| `style_attr(css)` | `style="css"`, escaped |
 | `disabled() checked()` | the bare name |
 | `data(name, value)` | `data-name="value"` |
 | `text(s)` | `s` escaped |
 | `raw(s)` | `s` as given: the one way to write markup from a string |
+| `style(attrs, css)`, `style_(css)` | `<style>css</style>`, guarded |
+| `script(attrs, js)`, `script_(js)` | `<script>js</script>`, guarded |
+
+CSS and JavaScript are not HTML, so they are not escaped: `a < b` stays as it is.
+They are guarded instead: a `\` goes between `<` and a following `/` or `!`, so
+`"</style>"` in the text becomes `"<\/style>"` and cannot close the element. In
+CSS and JavaScript strings `\/` and `\!` mean `/` and `!`.
 
 `render(node)`, `render_all(nodes)`, `document(node)` (with `<!DOCTYPE html>`),
 `escape(s)` and `unescape(s)`. Escaping turns `& < > "` into entities.
@@ -74,8 +82,10 @@ H.table_([
 - `escaping_loses_nothing`: `unescape(escape(s)) == s`.
 - `ul_holds_only_li`, `ol_holds_only_li`: every child of a `ul` or an `ol` is an `li`.
 - `table_is_well_formed`: a table holds only sections, a section only rows, a row only cells.
+- `guarded_text_cannot_close`: guarded text holds no `</` or `<!`, so it cannot close a `style` or `script` element.
+- `style_text_is_guarded`, `script_text_is_guarded`: their text is written guarded.
 
-The rest are examples: a page, the text helpers, form attributes, a document.
+The rest are examples: a page, the text helpers, form attributes, a document, a table, style and script.
 
 ```bash
 ./check.sh    # bend PROOF.bend must print ALL PROOFS CHECK
@@ -88,6 +98,7 @@ of chars that share the bits telling them apart, as `bend_json`'s `gen_tree.py` 
 
 - `raw` and the name in `data(name, value)` are written as given: never pass them untrusted text.
 - The constructors `H.Elem`, `H.Void`, `H.Txt` and `H.Raw` are public: a tag name given to `H.Elem` or `H.Void` is written as given.
-- No `script` or `style` elements: their content is not HTML-escaped text. Use `raw` with care.
+- Guarding changes `</` and `<!` outside strings too, which valid CSS and JavaScript only have in comments and regular expressions.
+- The CSS or JavaScript itself is not checked: never pass untrusted text to `style` or `script`.
 - Only lists and tables have a content model; a `div` inside a `p` passes the checker.
 - `bend PROOF.bend --verdict`, the second check by the kernel proven in Lean, has not been run.

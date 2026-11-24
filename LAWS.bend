@@ -153,3 +153,40 @@ law table_is_well_formed:
 
 law renders_a_table:
   {H.render(H.table([H.cls("t")], [H.thead_([H.tr_([H.tht("Name"), H.tht("Age")])]), H.tbody_([H.tr_([H.tdt("Ada"), H.td([H.cls("n")], [H.text("36")])])])])) == "<table class=\"t\"><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr><td>Ada</td><td class=\"n\">36</td></tr></tbody></table>" : String}
+
+# Style and script, for every text
+# ================================
+
+law classifies_guarded_chars:
+  {[H.near('<'), H.near('/'), H.near('!'), H.near('a'), H.near('\\')] == [H.LtChar{}, H.Shut{}, H.Shut{}, H.Else{}, H.Else{}] : List<&2, H.Near>}
+
+def is_shut(k: H.Near) -> Bool:
+  match k:
+    case H.Shut{}:
+      True{}
+    case _:
+      False{}
+
+# Whether `s` holds a < followed by / or !; `after_lt`: the char before was <.
+def closes(s: String, after_lt: Bool) -> Bool:
+  match s:
+    case SNil{}:
+      False{}
+    case SCon{+c, t}:
+      (after_lt && is_shut(H.near(c))) || closes(t, H.is_lt(H.near(c)))
+
+# Guarded text holds no </ or <!, so it cannot close a style or script element.
+law guarded_text_cannot_close:
+  for s: String
+  {closes(H.guard(s, False{}, ""), False{}) == False{} : Bool}
+
+law style_text_is_guarded:
+  for +s: String
+  {H.render(H.style_(s)) == String.append("<style>", String.append(H.guard(s, False{}, ""), "</style>")) : String}
+
+law script_text_is_guarded:
+  for +s: String
+  {H.render(H.script_(s)) == String.append("<script>", String.append(H.guard(s, False{}, ""), "</script>")) : String}
+
+law renders_style_and_script:
+  {H.render_all([H.style_("a::after { content: \"</style>\" }"), H.script([H.src("a.js")], ""), H.script_("if (a < b) x = \"<!--\";"), H.p([H.style_attr("color: red")], [])]) == "<style>a::after { content: \"<\\/style>\" }</style><script src=\"a.js\"></script><script>if (a < b) x = \"<\\!--\";</script><p style=\"color: red\"></p>" : String}

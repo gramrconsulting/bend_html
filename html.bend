@@ -21,6 +21,7 @@ type Attr is Data:
   Charset{value: String}
   Content{value: String}
   Lang{value: String}
+  StyleAttr{value: String}
   Action{value: String}
   Method{value: String}
   Disabled{}
@@ -32,6 +33,8 @@ type Node is Data:
   Void{tag: String, attrs: List<&2, Attr>}
   Txt{value: String}
   Raw{value: String}
+  StyleEl{attrs: List<&2, Attr>, css: String}
+  ScriptEl{attrs: List<&2, Attr>, js: String}
 
 # A list item: the only thing a ul or an ol holds.
 type Li is Data:
@@ -84,6 +87,10 @@ def content(s: String) -> Attr:
 
 def lang(s: String) -> Attr:
   Lang{s}
+
+# style="..": the inline style attribute; `style` is the element.
+def style_attr(s: String) -> Attr:
+  StyleAttr{s}
 
 def action(s: String) -> Attr:
   Action{s}
@@ -522,6 +529,63 @@ def table(attrs: List<&2, Attr>, sections: List<&2, Section>) -> Node:
 def table_(sections: List<&2, Section>) -> Node:
   table([], sections)
 
+# Style and script
+# ================
+
+# Their text is CSS or JavaScript, not HTML: it is written as given, except
+# that a \ goes between < and a following / or !, so the text can never close
+# its element. In CSS and JavaScript strings, \/ and \! mean / and !.
+def style(attrs: List<&2, Attr>, css: String) -> Node:
+  StyleEl{attrs, css}
+
+def style_(css: String) -> Node:
+  StyleEl{[], css}
+
+def script(attrs: List<&2, Attr>, js: String) -> Node:
+  ScriptEl{attrs, js}
+
+def script_(js: String) -> Node:
+  ScriptEl{[], js}
+
+# The chars guarding is about.
+type Near is Data:
+  LtChar{}
+  Shut{}
+  Else{}
+
+def near(c: Char) -> Near:
+  match c:
+    case '<':
+      LtChar{}
+    case '/':
+      Shut{}
+    case '!':
+      Shut{}
+    case _:
+      Else{}
+
+def is_lt(k: Near) -> Bool:
+  match k:
+    case LtChar{}:
+      True{}
+    case _:
+      False{}
+
+def guard_as(k: Near, c: Char, after_lt: Bool, tail: String) -> String:
+  match k after_lt:
+    case Shut{} True{}:
+      SCon{'\\', SCon{c, tail}}
+    case _ _:
+      SCon{c, tail}
+
+# The chars of `s` guarded, then `tail`; `after_lt`: the char before was <.
+def guard(s: String, after_lt: Bool, tail: String) -> String:
+  match s:
+    case SNil{}:
+      tail
+    case SCon{+c, t}:
+      guard_as(near(c), c, after_lt, guard(t, is_lt(near(c)), tail))
+
 # Escaping
 # ========
 
@@ -626,6 +690,8 @@ def show_attr(x: Attr, tail: String) -> String:
       show_pair("content", v, tail)
     case Lang{v}:
       show_pair("lang", v, tail)
+    case StyleAttr{v}:
+      show_pair("style", v, tail)
     case Action{v}:
       show_pair("action", v, tail)
     case Method{v}:
@@ -655,6 +721,10 @@ def show_nodes(ns: List<&2, Node>, tail: String) -> String:
       esc(s, show_nodes(rest, tail))
     case Raw{s} <> rest:
       String.append(s, show_nodes(rest, tail))
+    case StyleEl{attrs, css} <> rest:
+      show_open("style", attrs, guard(css, False{}, String.append("</style>", show_nodes(rest, tail))))
+    case ScriptEl{attrs, js} <> rest:
+      show_open("script", attrs, guard(js, False{}, String.append("</script>", show_nodes(rest, tail))))
     case Void{tag, attrs} <> rest:
       show_open(tag, attrs, show_nodes(rest, tail))
     case Elem{+tag, attrs, children} <> rest:
