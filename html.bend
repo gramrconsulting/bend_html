@@ -192,24 +192,6 @@ def pre(attrs: List<&2, Attr>, children: List<&2, Node>) -> Node:
 def blockquote(attrs: List<&2, Attr>, children: List<&2, Node>) -> Node:
   Elem{"blockquote", attrs, children}
 
-def table(attrs: List<&2, Attr>, children: List<&2, Node>) -> Node:
-  Elem{"table", attrs, children}
-
-def thead(attrs: List<&2, Attr>, children: List<&2, Node>) -> Node:
-  Elem{"thead", attrs, children}
-
-def tbody(attrs: List<&2, Attr>, children: List<&2, Node>) -> Node:
-  Elem{"tbody", attrs, children}
-
-def tr(attrs: List<&2, Attr>, children: List<&2, Node>) -> Node:
-  Elem{"tr", attrs, children}
-
-def th(attrs: List<&2, Attr>, children: List<&2, Node>) -> Node:
-  Elem{"th", attrs, children}
-
-def td(attrs: List<&2, Attr>, children: List<&2, Node>) -> Node:
-  Elem{"td", attrs, children}
-
 def form(attrs: List<&2, Attr>, children: List<&2, Node>) -> Node:
   Elem{"form", attrs, children}
 
@@ -335,24 +317,6 @@ def pre_(children: List<&2, Node>) -> Node:
 def blockquote_(children: List<&2, Node>) -> Node:
   Elem{"blockquote", [], children}
 
-def table_(children: List<&2, Node>) -> Node:
-  Elem{"table", [], children}
-
-def thead_(children: List<&2, Node>) -> Node:
-  Elem{"thead", [], children}
-
-def tbody_(children: List<&2, Node>) -> Node:
-  Elem{"tbody", [], children}
-
-def tr_(children: List<&2, Node>) -> Node:
-  Elem{"tr", [], children}
-
-def th_(children: List<&2, Node>) -> Node:
-  Elem{"th", [], children}
-
-def td_(children: List<&2, Node>) -> Node:
-  Elem{"td", [], children}
-
 def form_(children: List<&2, Node>) -> Node:
   Elem{"form", [], children}
 
@@ -419,12 +383,6 @@ def codet(s: String) -> Node:
 def pret(s: String) -> Node:
   Elem{"pre", [], [Txt{s}]}
 
-def tht(s: String) -> Node:
-  Elem{"th", [], [Txt{s}]}
-
-def tdt(s: String) -> Node:
-  Elem{"td", [], [Txt{s}]}
-
 def labelt(s: String) -> Node:
   Elem{"label", [], [Txt{s}]}
 
@@ -472,6 +430,97 @@ def ol(attrs: List<&2, Attr>, items: List<&2, Li>) -> Node:
 
 def ol_(items: List<&2, Li>) -> Node:
   ol([], items)
+
+# Tables
+# ======
+
+# A table holds sections, a section rows, a row cells.
+type Cell is Data:
+  Th{attrs: List<&2, Attr>, children: List<&2, Node>}
+  Td{attrs: List<&2, Attr>, children: List<&2, Node>}
+
+type Row is Data:
+  Tr{attrs: List<&2, Attr>, cells: List<&2, Cell>}
+
+type Section is Data:
+  THead{attrs: List<&2, Attr>, rows: List<&2, Row>}
+  TBody{attrs: List<&2, Attr>, rows: List<&2, Row>}
+  TFoot{attrs: List<&2, Attr>, rows: List<&2, Row>}
+
+def th(attrs: List<&2, Attr>, children: List<&2, Node>) -> Cell:
+  Th{attrs, children}
+
+def th_(children: List<&2, Node>) -> Cell:
+  Th{[], children}
+
+def tht(s: String) -> Cell:
+  Th{[], [Txt{s}]}
+
+def td(attrs: List<&2, Attr>, children: List<&2, Node>) -> Cell:
+  Td{attrs, children}
+
+def td_(children: List<&2, Node>) -> Cell:
+  Td{[], children}
+
+def tdt(s: String) -> Cell:
+  Td{[], [Txt{s}]}
+
+def tr(attrs: List<&2, Attr>, cells: List<&2, Cell>) -> Row:
+  Tr{attrs, cells}
+
+def tr_(cells: List<&2, Cell>) -> Row:
+  Tr{[], cells}
+
+def thead(attrs: List<&2, Attr>, rows: List<&2, Row>) -> Section:
+  THead{attrs, rows}
+
+def thead_(rows: List<&2, Row>) -> Section:
+  THead{[], rows}
+
+def tbody(attrs: List<&2, Attr>, rows: List<&2, Row>) -> Section:
+  TBody{attrs, rows}
+
+def tbody_(rows: List<&2, Row>) -> Section:
+  TBody{[], rows}
+
+def tfoot(attrs: List<&2, Attr>, rows: List<&2, Row>) -> Section:
+  TFoot{attrs, rows}
+
+def tfoot_(rows: List<&2, Row>) -> Section:
+  TFoot{[], rows}
+
+def cell_nodes(cells: List<&2, Cell>) -> List<&2, Node>:
+  match cells:
+    case Nil{}:
+      []
+    case Th{attrs, children} <> rest:
+      Elem{"th", attrs, children} <> cell_nodes(rest)
+    case Td{attrs, children} <> rest:
+      Elem{"td", attrs, children} <> cell_nodes(rest)
+
+def row_nodes(rows: List<&2, Row>) -> List<&2, Node>:
+  match rows:
+    case Nil{}:
+      []
+    case Tr{attrs, cells} <> rest:
+      Elem{"tr", attrs, cell_nodes(cells)} <> row_nodes(rest)
+
+def section_nodes(sections: List<&2, Section>) -> List<&2, Node>:
+  match sections:
+    case Nil{}:
+      []
+    case THead{attrs, rows} <> rest:
+      Elem{"thead", attrs, row_nodes(rows)} <> section_nodes(rest)
+    case TBody{attrs, rows} <> rest:
+      Elem{"tbody", attrs, row_nodes(rows)} <> section_nodes(rest)
+    case TFoot{attrs, rows} <> rest:
+      Elem{"tfoot", attrs, row_nodes(rows)} <> section_nodes(rest)
+
+def table(attrs: List<&2, Attr>, sections: List<&2, Section>) -> Node:
+  Elem{"table", attrs, section_nodes(sections)}
+
+def table_(sections: List<&2, Section>) -> Node:
+  table([], sections)
 
 # Escaping
 # ========

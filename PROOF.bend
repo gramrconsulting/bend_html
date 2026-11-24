@@ -384,3 +384,55 @@ def Laws.ul_holds_only_li(attrs, items):
 
 def Laws.ol_holds_only_li(attrs, items):
   li_nodes_are_li(items)
+
+# Tables
+# ======
+
+law cells_are_cells:
+  for cells: List<&2, H.Cell>
+  {Laws.all_cells(H.cell_nodes(cells)) == True{} : Bool}
+
+def cells_are_cells(cells):
+  match cells:
+    case Nil{}:
+      {==}
+    case H.Th{attrs, children} <> rest:
+      cells_are_cells(rest)
+    case H.Td{attrs, children} <> rest:
+      cells_are_cells(rest)
+
+law rows_are_rows:
+  for rows: List<&2, H.Row>
+  {Laws.all_rows(H.row_nodes(rows)) == True{} : Bool}
+
+def rows_are_rows(rows):
+  match rows:
+    case Nil{}:
+      {==}
+    case H.Tr{attrs, +cells} <> rest:
+      %Equal.sym(Bool, Laws.all_cells(H.cell_nodes(cells)), True{}, cells_are_cells(cells)) : {(_ && Laws.all_rows(H.row_nodes(rest))) == True{} : Bool}
+      rows_are_rows(rest)
+
+law sections_are_sections:
+  for sections: List<&2, H.Section>
+  {Laws.all_sections(H.section_nodes(sections)) == True{} : Bool}
+
+def sections_are_sections(sections):
+  match sections:
+    case Nil{}:
+      {==}
+    case H.THead{attrs, +rows} <> rest:
+      %Equal.sym(Bool, Laws.all_rows(H.row_nodes(rows)), True{}, rows_are_rows(rows)) : {(_ && Laws.all_sections(H.section_nodes(rest))) == True{} : Bool}
+      sections_are_sections(rest)
+    case H.TBody{attrs, +rows} <> rest:
+      %Equal.sym(Bool, Laws.all_rows(H.row_nodes(rows)), True{}, rows_are_rows(rows)) : {(_ && Laws.all_sections(H.section_nodes(rest))) == True{} : Bool}
+      sections_are_sections(rest)
+    case H.TFoot{attrs, +rows} <> rest:
+      %Equal.sym(Bool, Laws.all_rows(H.row_nodes(rows)), True{}, rows_are_rows(rows)) : {(_ && Laws.all_sections(H.section_nodes(rest))) == True{} : Bool}
+      sections_are_sections(rest)
+
+def Laws.table_is_well_formed(attrs, sections):
+  sections_are_sections(sections)
+
+def Laws.renders_a_table():
+  {==}

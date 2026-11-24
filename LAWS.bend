@@ -101,3 +101,55 @@ law ol_holds_only_li:
   for attrs: List<&2, H.Attr>
   for items: List<&2, H.Li>
   {holds_only_li(H.ol(attrs, items)) == True{} : Bool}
+
+# Tables, for every table
+# =======================
+
+def is_cell(+tag: String) -> Bool:
+  String.eq(tag, "th") || String.eq(tag, "td")
+
+def is_section(+tag: String) -> Bool:
+  String.eq(tag, "thead") || String.eq(tag, "tbody") || String.eq(tag, "tfoot")
+
+def all_cells(ns: List<&2, H.Node>) -> Bool:
+  match ns:
+    case Nil{}:
+      True{}
+    case H.Elem{tag, attrs, children} <> rest:
+      is_cell(tag) && all_cells(rest)
+    case _ <> rest:
+      False{}
+
+def all_rows(ns: List<&2, H.Node>) -> Bool:
+  match ns:
+    case Nil{}:
+      True{}
+    case H.Elem{tag, attrs, children} <> rest:
+      String.eq(tag, "tr") && all_cells(children) && all_rows(rest)
+    case _ <> rest:
+      False{}
+
+def all_sections(ns: List<&2, H.Node>) -> Bool:
+  match ns:
+    case Nil{}:
+      True{}
+    case H.Elem{tag, attrs, children} <> rest:
+      is_section(tag) && all_rows(children) && all_sections(rest)
+    case _ <> rest:
+      False{}
+
+def well_formed_table(n: H.Node) -> Bool:
+  match n:
+    case H.Elem{tag, attrs, children}:
+      String.eq(tag, "table") && all_sections(children)
+    case _:
+      False{}
+
+# A table holds thead, tbody or tfoot; they hold tr; a tr holds th or td.
+law table_is_well_formed:
+  for attrs: List<&2, H.Attr>
+  for sections: List<&2, H.Section>
+  {well_formed_table(H.table(attrs, sections)) == True{} : Bool}
+
+law renders_a_table:
+  {H.render(H.table([H.cls("t")], [H.thead_([H.tr_([H.tht("Name"), H.tht("Age")])]), H.tbody_([H.tr_([H.tdt("Ada"), H.td([H.cls("n")], [H.text("36")])])])])) == "<table class=\"t\"><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr><td>Ada</td><td class=\"n\">36</td></tr></tbody></table>" : String}

@@ -33,15 +33,24 @@ string as a child (`expected : H.Node`).
 | `void(attrs)` | `H.img([H.src("a.png")])` | `img input meta link`; `H.br()` and `H.hr()` take nothing |
 
 Elements: `html head body title header footer main_tag nav section article aside
-div span p h1`..`h6 a strong em code pre blockquote table thead tbody tr th td
+div span p h1`..`h6 a strong em code pre blockquote
 form label button textarea select option figure figcaption`. `main` is
 `main_tag`, since `main` names a program's entry.
 
-Text helpers: `titlet pt spant h1t`..`h6t strongt emt codet pret tht tdt labelt
+Text helpers: `titlet pt spant h1t`..`h6t strongt emt codet pret labelt
 buttont optiont figcaptiont`, and `lit` for a list item.
 
 A `ul` or an `ol` holds `H.Li` items only: `H.li(attrs, children)`, `H.li_(children)`
 or `H.lit(text)`.
+
+A table is typed the same way: `table` holds sections (`thead tbody tfoot`), a section
+holds rows (`tr`), a row holds cells (`th td`, or `tht tdt` for text). Each has a `_` form.
+
+```python
+H.table_([
+  H.thead_([H.tr_([H.tht("Name"), H.tht("Age")])]),
+  H.tbody_([H.tr_([H.tdt("Ada"), H.tdt("36")])])])
+```
 
 ## Attributes and text
 
@@ -64,6 +73,7 @@ or `H.lit(text)`.
 - `text_is_escaped`, `attribute_value_is_escaped`: text and attribute values are written escaped.
 - `escaping_loses_nothing`: `unescape(escape(s)) == s`.
 - `ul_holds_only_li`, `ol_holds_only_li`: every child of a `ul` or an `ol` is an `li`.
+- `table_is_well_formed`: a table holds only sections, a section only rows, a row only cells.
 
 The rest are examples: a page, the text helpers, form attributes, a document.
 
@@ -79,5 +89,5 @@ of chars that share the bits telling them apart, as `bend_json`'s `gen_tree.py` 
 - `raw` and the name in `data(name, value)` are written as given: never pass them untrusted text.
 - The constructors `H.Elem`, `H.Void`, `H.Txt` and `H.Raw` are public: a tag name given to `H.Elem` or `H.Void` is written as given.
 - No `script` or `style` elements: their content is not HTML-escaped text. Use `raw` with care.
-- Only lists have a content model; a `tr` outside a `table` passes the checker.
+- Only lists and tables have a content model; a `div` inside a `p` passes the checker.
 - `bend PROOF.bend --verdict`, the second check by the kernel proven in Lean, has not been run.
