@@ -26,3 +26,41 @@ law renders_form_attributes:
 
 law renders_a_document:
   {H.document(H.html([H.lang("da")], [H.body_([])])) == "<!DOCTYPE html><html lang=\"da\"><body></body></html>" : String}
+
+# Escaping, for every string
+# ==========================
+
+law classifies_special_chars:
+  {[H.special('&'), H.special('<'), H.special('>'), H.special('"'), H.special('a'), H.special('\'')] == [H.Amp{}, H.Lt{}, H.Gt{}, H.Quot{}, H.Plain{}, H.Plain{}] : List<&2, H.Special>}
+
+# A char that can open or close a tag or end a quoted attribute value.
+def is_markup(k: H.Special) -> Bool:
+  match k:
+    case H.Lt{}:
+      True{}
+    case H.Gt{}:
+      True{}
+    case H.Quot{}:
+      True{}
+    case _:
+      False{}
+
+def has_markup(s: String) -> Bool:
+  match s:
+    case SNil{}:
+      False{}
+    case SCon{+c, t}:
+      is_markup(H.special(c)) || has_markup(t)
+
+# Escaped text has no <, > or ": it cannot open a tag or end an attribute.
+law escaped_has_no_markup:
+  for s: String
+  {has_markup(H.escape(s)) == False{} : Bool}
+
+law text_is_escaped:
+  for s: String
+  {H.render(H.text(s)) == H.escape(s) : String}
+
+law attribute_value_is_escaped:
+  for +s: String
+  {H.render(H.div([H.cls(s)], [])) == String.append("<div class=\"", String.append(H.escape(s), "\"></div>")) : String}

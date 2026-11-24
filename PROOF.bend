@@ -17,3 +17,88 @@ def Laws.renders_form_attributes():
 
 def Laws.renders_a_document():
   {==}
+
+# Escaping
+# ========
+
+def Laws.classifies_special_chars():
+  {==}
+
+# Escaping one char adds no markup.
+law esc_as_no_markup:
+  for k: H.Special
+  for c: Char
+  for tail: String
+  for e: {H.special(c) == k : H.Special}
+  {Laws.has_markup(H.esc_as(k, c, tail)) == Laws.has_markup(tail) : Bool}
+
+def esc_as_no_markup(k, c, tail, e):
+  match k:
+    case H.Amp{}:
+      {==}
+    case H.Lt{}:
+      {==}
+    case H.Gt{}:
+      {==}
+    case H.Quot{}:
+      {==}
+    case H.Plain{}:
+      %e : {Laws.has_markup(SCon{c, tail}) == (Laws.is_markup(_) || Laws.has_markup(tail)) : Bool}
+      {==}
+
+law esc_no_markup:
+  for s: String
+  for +tail: String
+  {Laws.has_markup(H.esc(s, tail)) == Laws.has_markup(tail) : Bool}
+
+def esc_no_markup(s, tail):
+  match s:
+    case SNil{}:
+      {==}
+    case SCon{+c, +t}:
+      %esc_no_markup(t, tail) : {Laws.has_markup(H.esc_as(H.special(c), c, H.esc(t, tail))) == _ : Bool}
+      esc_as_no_markup(H.special(c), c, H.esc(t, tail), {==})
+
+def Laws.escaped_has_no_markup(s):
+  esc_no_markup(s, "")
+
+def Laws.text_is_escaped(s):
+  {==}
+
+# Appending after one escaped char is escaping onto what follows.
+law esc_as_app:
+  for k: H.Special
+  for c: Char
+  for x: String
+  for y: String
+  {String.append(H.esc_as(k, c, x), y) == H.esc_as(k, c, String.append(x, y)) : String}
+
+def esc_as_app(k, c, x, y):
+  match k:
+    case H.Amp{}:
+      {==}
+    case H.Lt{}:
+      {==}
+    case H.Gt{}:
+      {==}
+    case H.Quot{}:
+      {==}
+    case H.Plain{}:
+      {==}
+
+law esc_app:
+  for s: String
+  for +tail: String
+  {H.esc(s, tail) == String.append(H.esc(s, ""), tail) : String}
+
+def esc_app(s, tail):
+  match s:
+    case SNil{}:
+      {==}
+    case SCon{+c, +t}:
+      %Equal.sym(String, String.append(H.esc_as(H.special(c), c, H.esc(t, "")), tail), H.esc_as(H.special(c), c, String.append(H.esc(t, ""), tail)), esc_as_app(H.special(c), c, H.esc(t, ""), tail)) : {H.esc_as(H.special(c), c, H.esc(t, tail)) == _ : String}
+      %esc_app(t, tail) : {H.esc_as(H.special(c), c, H.esc(t, tail)) == H.esc_as(H.special(c), c, _) : String}
+      {==}
+
+def Laws.attribute_value_is_escaped(s):
+  Equal.cong(String, String, x => String.append("<div class=\"", x), H.esc(s, "\"></div>"), String.append(H.esc(s, ""), "\"></div>"), esc_app(s, "\"></div>"))
